@@ -1,11 +1,20 @@
+# Notifica istantanea a codewhisperer (repository_dispatch). Senza il
+# secret CODEWHISPERER_PAT il passo viene SALTATO senza errore: resta
+# il content-sync ogni 30 minuti.
 on: { push: { branches: [main] } }
 jobs:
   notify:
     runs-on: ubuntu-latest
+    env:
+      PAT: ${{ secrets.CODEWHISPERER_PAT }}
     steps:
       - run: |
+          if [ -z "$PAT" ]; then
+            echo "CODEWHISPERER_PAT assente: notifica saltata (resta il sync ogni 30')"
+            exit 0
+          fi
           curl -sf -X POST \
-            -H "Authorization: Bearer ${{ secrets.CODEWHISPERER_PAT }}" \
+            -H "Authorization: Bearer $PAT" \
             -H "Accept: application/vnd.github+json" \
             https://api.github.com/repos/lucafregoso/codewhisperer/dispatches \
             -d '{"event_type":"content-update"}'
